@@ -1,0 +1,32 @@
+services:
+  # SOC Prediction API
+  soc-api:
+    build: .
+    container_name: soc-prediction-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Streamlit Demo
+  soc-demo:
+    build: .
+    container_name: soc-demo-app
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://soc-api:8000
+    command: ["python", "-m", "streamlit", "run", "demo/streamlit_app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    depends_on:
+      - soc-api
+    restart: unless-stopped
+
+networks:
+  default:
+    name: soc-network
